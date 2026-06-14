@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from SRCCompany.forms import WebinfoForms,ServerForms,PlugForms,PortForms
 
 import time
+from django.db.models import Q
 
 # Create your views here.
 @csrf_protect
@@ -270,3 +271,148 @@ def Port_add(request,subdomain_id):
     else:
         error = '请求错误'
         return render(request,'error.html',{'error':error})
+
+@login_required
+def search(request):
+    '''全局搜索：跨公司/子域名/网站/服务器/端口/组件多模型模糊匹配'''
+    query = request.GET.get('q', '').strip()
+    results = {
+        'companies': [],
+        'subdomains': [],
+        'webinfos': [],
+        'servers': [],
+        'plugs': [],
+        'ports': [],
+    }
+
+    if query:
+        q = query
+
+        # ---- 公司 ----
+        companies = CompanyInfo.objects.filter(
+            Q(company_name__icontains=q) |
+            Q(company_src_name__icontains=q) |
+            Q(company_www__icontains=q) |
+            Q(company_src_www__icontains=q)
+        ).distinct()
+        for c in companies:
+            results['companies'].append({
+                'obj': c,
+                'hierarchy': c.company_name,
+                'link_id': c.company_id,
+            })
+
+        # ---- 子域名 ----
+        subdomains = Subdomain.objects.filter(
+            Q(subdomain_name__icontains=q) |
+            Q(subdomain_www__icontains=q)
+        ).select_related('subdomain_company').distinct()
+        for s in subdomains:
+            results['subdomains'].append({
+                'obj': s,
+                'hierarchy': u'{} > {}'.format(
+                    s.subdomain_company.company_name, s.subdomain_name or s.subdomain_www),
+                'link_id': s.subdomain_id,
+            })
+
+        # ---- 网站信息 ----
+        webinfos = Webinfo.objects.filter(
+            Q(web_url__icontains=q) |
+            Q(web_front__icontains=q) |
+            Q(web_language__icontains=q) |
+            Q(web_framework__icontains=q) |
+            Q(web_template__icontains=q) |
+            Q(web_container__icontains=q)
+        ).select_related(
+            'web_subdomain',
+            'web_subdomain__subdomain_company'
+        ).distinct()
+        for w in webinfos:
+            sd = w.web_subdomain
+            co = sd.subdomain_company
+            results['webinfos'].append({
+                'obj': w,
+                'hierarchy': u'{} > {} > {}'.format(
+                    co.company_name, sd.subdomain_name or sd.subdomain_www, w.web_url),
+                'link_id': sd.subdomain_id,
+            })
+
+        # ---- 服务器 ----
+        servers = Server.objects.filter(
+            Q(server_name__icontains=q) |
+            Q(server_ip__icontains=q) |
+            Q(server_os__icontains=q)
+        ).select_related(
+            'server_subdomain',
+            'server_subdomain__subdomain_company'
+        ).distinct()
+        for s in servers:
+            sd = s.server_subdomain
+            co = sd.subdomain_company
+            results['servers'].append({
+                'obj': s,
+                'hierarchy': u'{} > {} > {}'.format(
+                    co.company_name, sd.subdomain_name or sd.subdomain_www, s.server_ip),
+                'link_id': sd.subdomain_id,
+            })
+
+        # ---- 组件 ----
+        plugs = Plug.objects.filter(
+            Q(plug_name__icontains=q) |
+            Q(plug_version__icontains=q)
+        ).select_related(
+            'plug_webinfo',
+            'plug_webinfo__web_subdomain',
+            'plug_webinfo__web_subdomain__subdomain_company'
+        ).distinct()
+        for p in plugs:
+            wi = p.plug_webinfo
+            sd = wi.web_subdomain
+            co = sd.subdomain_company
+            results['plugs'].append({
+                'obj': p,
+                'hierarchy': u'{} > {} > {} > {}'.format(
+                    co.company_name, sd.subdomain_name or sd.subdomain_www,
+                    wi.web_url, p.plug_name),
+                'link_id': sd.subdomain_id,
+            })
+
+        # ---- 端口 ----
+        try:
+            ports = Port.objects.filter(
+                Q(name__icontains=q) |
+                Q(port__icontains=q) |
+                Q(product__icontains=q) |
+                Q(version__icontains=q)
+            ).select_related(
+                'port_server',
+                'port_server__server_subdomain',
+                'port_server__server_subdomain__subdomain_company'
+            ).distinct()
+        except Exception:
+            ports = Port.objects.none()
+        for p in ports:
+            sv = p.port_server
+            sd = sv.server_subdomain
+            co = sd.subdomain_company
+            detail_parts = [u'端口:{}'.format(p.port)]
+            if p.product:
+                detail_parts.append(p.product)
+            if p.version:
+                detail_parts.append(p.version)
+            results['ports'].append({
+                'obj': p,
+                'hierarchy': u'{} > {} > {} > {}'.format(
+                    co.company_name, sd.subdomain_name or sd.subdomain_www,
+                    sv.server_ip, u' / '.join(detail_parts)),
+                'link_id': sd.subdomain_id,
+            })
+
+    total_count = sum(len(v) for v in results.values())
+
+    context = {
+        'query': query,
+        'results': results,
+        'total_count': total_count,
+    }
+    return render(request, 'SRCinfo/search_results.html', context)

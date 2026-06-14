@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 
 <!DOCTYPE html>
 <html>
@@ -52,8 +52,8 @@
               </ul>
             </li>
           </ul>
-          <form class="navbar-form navbar-right">
-            <input type="text" class="form-control" placeholder="Search...">
+          <form class="navbar-form navbar-right" action="{% url 'search' %}" method="get">
+            <input type="text" name="q" class="form-control" placeholder="搜索公司/域名/IP/组件..." value="{{ query|default:'' }}">
           </form>
         </div>
       </div>
