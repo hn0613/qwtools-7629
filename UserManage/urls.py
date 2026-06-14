@@ -1,17 +1,10 @@
 #coding:utf-8
-'''
-Created on 2017/11/28
-
-@author: gy071089
-'''
-
-
-from django.conf.urls import url
+from django.urls import re_path
 
 from UserManage import views
 
 urlpatterns = [
-    url(r'^$', views.signin, name='signin'),
-    url(r'^regist/$', views.regist, name='regist'),
-    url(r'^signout/$', views.signout, name='signout'),
+    re_path(r'^$', views.signin, name='signin'),
+    re_path(r'^regist/$', views.regist, name='regist'),
+    re_path(r'^signout/$', views.signout, name='signout'),
 ]

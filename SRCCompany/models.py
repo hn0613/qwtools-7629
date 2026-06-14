@@ -9,13 +9,13 @@ class CompanyInfo(models.Model):
     #企业信息
     company_id = models.IntegerField('企    业    编    号')
     company_src_name = models.CharField('应急响应中心',max_length = 50)
-    company_src_www = models.URLField('应急中心地址')
+    company_src_www = models.URLField('应急中心地址',unique=True)
     company_name = models.CharField('企业名称',max_length = 50)
     company_www = models.URLField('官网地址')
     company_ioc = models.URLField('企业图标',null=True)
     company_starttime = models.DateField('添加时间',auto_now_add=True)
     company_updatetime = models.DateField('更新时间',auto_now=True)
-    
+
     def __str__(self):
         return str(self.company_id)
     
@@ -27,9 +27,12 @@ class Subdomain(models.Model):
     subdomain_www = models.URLField('子域名地址')
     subdomain_starttime = models.DateField('添加时间',auto_now_add=True)
     subdomain_updatetime = models.DateField('更新时间',auto_now=True)
-    
-    subdomain_company = models.ForeignKey(CompanyInfo,related_name='subdomain_in_company')
-    
+
+    subdomain_company = models.ForeignKey(CompanyInfo,related_name='subdomain_in_company',on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [('subdomain_company', 'subdomain_www')]
+
     def __str__(self):
         return str(self.subdomain_www)
 
@@ -44,9 +47,12 @@ class Webinfo(models.Model):
     web_container = models.CharField('WEB容器',max_length=30,null=True)
     web_starttime = models.DateField('添加时间',auto_now_add=True)
     web_updatetime = models.DateField('更新时间',auto_now=True)
-    
-    web_subdomain = models.ForeignKey(Subdomain,related_name='web_in_subdomain')
-    
+
+    web_subdomain = models.ForeignKey(Subdomain,related_name='web_in_subdomain',on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [('web_subdomain', 'web_url')]
+
     def __str__(self):
         return str(self.web_url)
     
@@ -57,10 +63,13 @@ class Server(models.Model):
     server_os = models.CharField('操作系统',max_length=30,null=True)
     server_starttime = models.DateField('添加时间',auto_now_add=True)
     server_updatetime = models.DateField('更新时间',auto_now=True)
-    
-    server_company = models.ForeignKey(CompanyInfo,related_name='server_in_company')
-    server_subdomain = models.ForeignKey(Subdomain,related_name='server_in_subdomain')
-    
+
+    server_company = models.ForeignKey(CompanyInfo,related_name='server_in_company',on_delete=models.CASCADE)
+    server_subdomain = models.ForeignKey(Subdomain,related_name='server_in_subdomain',on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [('server_subdomain', 'server_ip')]
+
     def __str__(self):
         return str(self.server_ip)
 
@@ -72,9 +81,12 @@ class Port(models.Model):
     product = models.CharField('对应服务',max_length=30,null=True)
     version = models.CharField('应用版本',max_length=30,null=True)
     cpe = models.CharField('终端说明',max_length=30,null=True)
-    
-    port_server = models.ForeignKey(Server,related_name='port_in_server',verbose_name='服务器关联')
-    
+
+    port_server = models.ForeignKey(Server,related_name='port_in_server',verbose_name='服务器关联',on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [('port_server', 'port')]
+
     def __str__(self):
         return str(self.port)
     
@@ -85,9 +97,12 @@ class Plug(models.Model):
     plug_version = models.CharField('组件版本',max_length=30,null=True)
     plug_starttime = models.DateField('添加时间',auto_now_add=True)
     plug_updatetime = models.DateField('更新时间',auto_now=True)
-    
-    plug_webinfo = models.ForeignKey(Webinfo,related_name='plug_in_webinfo',verbose_name='网页关联')
-    
+
+    plug_webinfo = models.ForeignKey(Webinfo,related_name='plug_in_webinfo',verbose_name='网页关联',on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [('plug_webinfo', 'plug_name')]
+
     def __str__(self):
         return str(self.plug_name)
     
