@@ -64,6 +64,14 @@ class PlugForms(ModelForm):
                    'plug_version': TextInput(attrs={'class':'form-control','placeholder':'组件版本'}),
                    'plug_webinfo': Select(attrs={'class':'form-control'}),
                    }
+
+    def __init__(self, *args, **kwargs):
+        subdomain_id = kwargs.pop('subdomain_id', None)
+        super(PlugForms, self).__init__(*args, **kwargs)
+        if subdomain_id:
+            self.fields['plug_webinfo'].queryset = Webinfo.objects.filter(
+                web_subdomain__subdomain_id=subdomain_id
+            )
         
 class PortForms(ModelForm):
     class Meta:
@@ -76,3 +84,11 @@ class PortForms(ModelForm):
                    'version': TextInput(attrs={'class':'form-control','placeholder':'应用版本'}),
                    'port_server': Select(attrs={'class':'form-control'}),
                    }
+
+    def __init__(self, *args, **kwargs):
+        subdomain_id = kwargs.pop('subdomain_id', None)
+        super(PortForms, self).__init__(*args, **kwargs)
+        if subdomain_id:
+            self.fields['port_server'].queryset = Server.objects.filter(
+                server_subdomain__subdomain_id=subdomain_id
+            )
