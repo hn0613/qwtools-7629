@@ -1,21 +1,22 @@
 #coding:utf-8
 from django.shortcuts import render,HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
+from django.http import Http404
+from django.contrib import messages
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.decorators import login_required
+
 from SRCCompany.models import CompanyInfo,Subdomain,Webinfo,Server,Port,Plug
 from SRCCompany.forms import CompanyInfoForms,SubDomainForms
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.decorators import login_required 
 from SRCCompany.forms import WebinfoForms,ServerForms,PlugForms,PortForms
+from SRCCompany.dedup import smart_get_or_create
 
 import time
 
-# Create your views here.
+
 @csrf_protect
 @login_required
 def view_SRC(request):
-    '''
-            查看
-    '''
     if request.method == "POST":
         form = CompanyInfoForms(request.POST)
         if form.is_valid():
@@ -24,56 +25,51 @@ def view_SRC(request):
             except Exception:
                 num = 0
             company_id = time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
-            company_src_name = form.cleaned_data['company_src_name']
-            company_src_www = form.cleaned_data['company_src_www']
-            company_name = form.cleaned_data['company_name']
-            company_www = form.cleaned_data['company_www']
-            company_ioc = form.cleaned_data['company_ioc']
-            
-            CompanyInfo.objects.get_or_create(
-                                          company_id = company_id,
-                                          company_src_name = company_src_name,
-                                          company_src_www = company_src_www,
-                                          company_name = company_name,
-                                          company_www = company_www,
-                                          company_ioc = company_ioc,
-                                        )
+
+            obj, created = smart_get_or_create(
+                CompanyInfo,
+                lookup={'company_name': form.cleaned_data['company_name']},
+                defaults={
+                    'company_id': company_id,
+                    'company_src_name': form.cleaned_data['company_src_name'],
+                    'company_src_www': form.cleaned_data['company_src_www'],
+                    'company_www': form.cleaned_data['company_www'],
+                    'company_ioc': form.cleaned_data['company_ioc'],
+                },
+            )
+            if not created:
+                messages.info(request, '企业「%s」已存在，已更新相关信息' % obj.company_name)
             return HttpResponseRedirect('/SRC')
         else:
             error = '添加失败，请检查输入'
-            
+
     if request.method == "GET":
         SRC_lists = CompanyInfo.objects.all().order_by('company_updatetime')
         form = CompanyInfoForms()
-        
+
         paginator = Paginator(SRC_lists, 7)
-        
+
         page = request.GET.get('page')
         try:
             SRC_list = paginator.page(page)
         except PageNotAnInteger:
             SRC_list = paginator.page(1)
         except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
             SRC_list = paginator.page(paginator.num_pages)
         return render(request,'SRCinfo/SRC_view.html',{'SRC_list':SRC_list,'form':form})
     return render(request,'error.html',{'error':error})
 
 @login_required
 def delete_SRC(request,company_id):
-    '''
-                删除
-    '''
-    if company_id:
-        CompanyInfo.objects.get(company_id = company_id).delete()
+    obj = CompanyInfo.objects.filter(company_id=company_id).first()
+    if obj is None:
+        raise Http404
+    obj.delete()
     return HttpResponseRedirect('/SRC')
 
 @csrf_protect
 @login_required
 def view_SubDomain(request,company_id):
-    '''
-            查看
-    '''
     if request.method == "POST":
         form = SubDomainForms(request.POST)
         if form.is_valid():
@@ -82,52 +78,59 @@ def view_SubDomain(request,company_id):
             except Exception:
                 num = 0
             subdomain_id = 'sd' + time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
-            subdomain_name = form.cleaned_data['subdomain_name']
-            subdomain_www = form.cleaned_data['subdomain_www']
-            
-            Subdomain.objects.get_or_create(
-                                          subdomain_id = subdomain_id,
-                                          subdomain_name = subdomain_name,
-                                          subdomain_www = subdomain_www,
-                                          subdomain_company = CompanyInfo.objects.get(company_id=company_id),
-                                        )
+
+            company = CompanyInfo.objects.filter(company_id=company_id).first()
+            if company is None:
+                return render(request,'error.html',{'error':'企业不存在'})
+
+            obj, created = smart_get_or_create(
+                Subdomain,
+                lookup={
+                    'subdomain_www': form.cleaned_data['subdomain_www'],
+                    'subdomain_company': company,
+                },
+                defaults={
+                    'subdomain_id': subdomain_id,
+                    'subdomain_name': form.cleaned_data['subdomain_name'],
+                },
+            )
+            if not created:
+                messages.info(request, '子域名「%s」已存在，已更新相关信息' % obj.subdomain_www)
             return HttpResponseRedirect('/SRC/WEB/'+company_id)
         else:
             error = '添加失败，请检查输入'
-            
+
     if request.method == "GET":
-        SRC = CompanyInfo.objects.get(company_id=company_id)
+        SRC = CompanyInfo.objects.filter(company_id=company_id).first()
+        if SRC is None:
+            return render(request,'error.html',{'error':'企业不存在'})
         SubDomain_lists = SRC.subdomain_in_company.all().order_by('subdomain_updatetime')
         form = SubDomainForms()
-        
+
         paginator = Paginator(SubDomain_lists, 7)
-        
+
         page = request.GET.get('page')
         try:
             WEB_list = paginator.page(page)
         except PageNotAnInteger:
             WEB_list = paginator.page(1)
         except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
             WEB_list = paginator.page(paginator.num_pages)
         return render(request,'SRCinfo/SubDomain.html',{'WEB_list':WEB_list,'form':form})
     return render(request,'error.html',{'error':error})
 
 @login_required
 def delete_WEB(request,subdomain_id):
-    '''
-                删除
-    '''
-    if subdomain_id:
-        WEB = Subdomain.objects.get(subdomain_id = subdomain_id)
-        company_id = WEB.subdomain_company.company_id
-        WEB.delete()
+    WEB = Subdomain.objects.filter(subdomain_id=subdomain_id).first()
+    if WEB is None:
+        raise Http404
+    company_id = WEB.subdomain_company.company_id
+    WEB.delete()
     return HttpResponseRedirect('/SRC/WEB/'+str(company_id))
 
 @login_required
 def view_WEBinfo(request,subdomain_id):
     subdomain_list = Subdomain.objects.filter(subdomain_id = subdomain_id)
-    #company_id = subdomain.subdomain_company.company_id
     if subdomain_list:
         for subdomain in subdomain_list:
             webinfo_list = subdomain.web_in_subdomain.all()
@@ -174,23 +177,29 @@ def Webinfo_add(request,subdomain_id):
                 num = Webinfo.objects.latest('id').id
             except Exception:
                 num = 0
-            web_id =  time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
-            web_url = form.cleaned_data['web_url']
-            web_front = form.cleaned_data['web_front']
-            web_language = form.cleaned_data['web_language']
-            web_framework = form.cleaned_data['web_framework']
-            web_template = form.cleaned_data['web_template']
-            web_container = form.cleaned_data['web_container']
-            
-            Webinfo.objects.get_or_create(web_id = web_id,
-                                          web_url = web_url,
-                                          web_front = web_front,
-                                          web_language = web_language,
-                                          web_framework = web_framework,
-                                          web_template = web_template,
-                                          web_container = web_container,
-                                          web_subdomain = Subdomain.objects.get(subdomain_id=subdomain_id)
-                                          )
+            web_id = time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
+
+            subdomain = Subdomain.objects.filter(subdomain_id=subdomain_id).first()
+            if subdomain is None:
+                return render(request,'error.html',{'error':'子域名不存在'})
+
+            obj, created = smart_get_or_create(
+                Webinfo,
+                lookup={
+                    'web_url': form.cleaned_data['web_url'],
+                    'web_subdomain': subdomain,
+                },
+                defaults={
+                    'web_id': web_id,
+                    'web_front': form.cleaned_data['web_front'],
+                    'web_language': form.cleaned_data['web_language'],
+                    'web_framework': form.cleaned_data['web_framework'],
+                    'web_template': form.cleaned_data['web_template'],
+                    'web_container': form.cleaned_data['web_container'],
+                },
+            )
+            if not created:
+                messages.info(request, '网站「%s」已存在，已更新相关信息' % obj.web_url)
             return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
         else:
             error = '添加失败，请检查输入'
@@ -198,21 +207,27 @@ def Webinfo_add(request,subdomain_id):
     else:
         error = '请求错误'
         return render(request,'error.html',{'error':error})
-    
+
 @csrf_protect
 @login_required
 def Plug_add(request,subdomain_id):
     if request.method == "POST":
         form = PlugForms(request.POST)
         if form.is_valid():
-            plug_name = form.cleaned_data['plug_name']
-            plug_version = form.cleaned_data['plug_version']
             plug_webinfo = form.cleaned_data['plug_webinfo']
-            web_id = plug_webinfo.web_id
-            Plug.objects.get_or_create(plug_name = plug_name,
-                                          plug_version = plug_version,
-                                          plug_webinfo = Webinfo.objects.get(web_id = web_id )
-                                          )
+
+            obj, created = smart_get_or_create(
+                Plug,
+                lookup={
+                    'plug_name': form.cleaned_data['plug_name'],
+                    'plug_webinfo': plug_webinfo,
+                },
+                defaults={
+                    'plug_version': form.cleaned_data['plug_version'],
+                },
+            )
+            if not created:
+                messages.info(request, '组件「%s」已存在，已更新相关信息' % obj.plug_name)
             return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
         else:
             error = '添加失败，请检查输入'
@@ -220,24 +235,31 @@ def Plug_add(request,subdomain_id):
     else:
         error = '请求错误'
         return render(request,'error.html',{'error':error})
-    
+
 @csrf_protect
 @login_required
 def Server_add(request,subdomain_id):
     if request.method == "POST":
         form = ServerForms(request.POST)
         if form.is_valid():
-            server_subdomain = Subdomain.objects.get(subdomain_id=subdomain_id)
-            company_id = server_subdomain.subdomain_company.company_id
-            server_name = form.cleaned_data['server_name']
-            server_ip = form.cleaned_data['server_ip']
-            server_os = form.cleaned_data['server_os']
-            Server.objects.get_or_create(server_subdomain=server_subdomain,
-                                       server_company=CompanyInfo.objects.get(company_id=company_id),
-                                       server_name=server_name,
-                                       server_ip=server_ip,
-                                       server_os=server_os,
-                                       )
+            server_subdomain = Subdomain.objects.filter(subdomain_id=subdomain_id).first()
+            if server_subdomain is None:
+                return render(request,'error.html',{'error':'子域名不存在'})
+
+            obj, created = smart_get_or_create(
+                Server,
+                lookup={
+                    'server_ip': form.cleaned_data['server_ip'],
+                    'server_subdomain': server_subdomain,
+                },
+                defaults={
+                    'server_name': form.cleaned_data['server_name'],
+                    'server_os': form.cleaned_data['server_os'],
+                    'server_company': server_subdomain.subdomain_company,
+                },
+            )
+            if not created:
+                messages.info(request, '服务器「%s」已存在，已更新相关信息' % obj.server_ip)
             return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
         else:
             error = '添加失败，请检查输入'
@@ -252,17 +274,22 @@ def Port_add(request,subdomain_id):
     if request.method == "POST":
         form = PortForms(request.POST)
         if form.is_valid():
-            name = form.cleaned_data['name']
-            port = form.cleaned_data['port']
-            product = form.cleaned_data['product']
-            version = form.cleaned_data['version']
             port_server = form.cleaned_data['port_server']
-            Port.objects.get_or_create(name=name,
-                                       port=port,
-                                       product=product,
-                                       version=version,
-                                       port_server=port_server,
-                                       )
+
+            obj, created = smart_get_or_create(
+                Port,
+                lookup={
+                    'port': form.cleaned_data['port'],
+                    'port_server': port_server,
+                },
+                defaults={
+                    'name': form.cleaned_data['name'],
+                    'product': form.cleaned_data['product'],
+                    'version': form.cleaned_data['version'],
+                },
+            )
+            if not created:
+                messages.info(request, '端口「%s」已存在，已更新相关信息' % obj.port)
             return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
         else:
             error = '添加失败，请检查输入'
