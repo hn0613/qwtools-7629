@@ -1,0 +1,13 @@
+<meta charset="UTF-8">
+<!-- 编辑表单片段（由 AJAX GET 渲染后塞入 edit-modal） -->
+<form id="edit-form" method="POST" action="{{ action_url }}">
+	{% csrf_token %}
+	<div class="form-group">
+		{{ form.as_table }}
+	</div>
+	<div id="edit-errors" class="alert alert-danger" style="display:none"></div>
+	<div align="right">
+		<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+		<button type="submit" class="btn btn-primary">保存修改</button>
+	</div>
+</form>

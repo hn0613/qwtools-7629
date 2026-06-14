@@ -1,4 +1,4 @@
-{% extends "DashBoard_base.html" %} 
+{% extends "DashBoard_base.html" %}
 
 <meta charset="UTF-8">
 
@@ -29,10 +29,10 @@
 	              	<tbody>
 	              		<tr>
 	              			<td >{{subdomain.subdomain_id}}</td>
-		              		<td>{{subdomain.subdomain_name}}</td>
-		              		<td><a href={{subdomain.subdomain_www}} target = "_blank" >{{subdomain.subdomain_www}}</a></td>
-		              		<td>{{subdomain.subdomain_starttime}}</td>
-		              		<td>{{subdomain.subdomain_updatetime}}</td>
+			              		<td>{{subdomain.subdomain_name}}</td>
+			              		<td><a href={{subdomain.subdomain_www}} target = "_blank" >{{subdomain.subdomain_www}}</a></td>
+			              		<td>{{subdomain.subdomain_starttime}}</td>
+			              		<td>{{subdomain.subdomain_updatetime}}</td>
 	              		</tr>
 	              	</tbody>
 	              	{% endfor %}
@@ -93,6 +93,7 @@
 	                  <th>开发框架</th>
 	                  <th>网站模板</th>
 	                  <th>WEB容器</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              {% if webinfo_list %}
@@ -101,10 +102,11 @@
 	              		<tr>
 	              			<td><a href={{WEB.subdomain_www}} target = "_blank">{{webinfo.web_url}}</a></td>
 	              			<td>{{webinfo.web_front}}</td>
-		              		<td>{{webinfo.web_language}}</td>
-		              		<td>{{webinfo.web_framework}}</td>
-		              		<td>{{webinfo.web_template}}</td>
-		              		<td>{{webinfo.web_container}}</td>
+			              		<td>{{webinfo.web_language}}</td>
+			              		<td>{{webinfo.web_framework}}</td>
+			              		<td>{{webinfo.web_template}}</td>
+			              		<td>{{webinfo.web_container}}</td>
+			              		<td><button class="btn btn-warning btn-xs btn-edit" data-edit-url="{% url 'edit_webinfo' webinfo.pk %}">编辑</button></td>
 	              		</tr>
 	              	</tbody>
 	              	{% endfor %}
@@ -113,6 +115,7 @@
 	              {% endif %}
 	               <tbody>
 	               <tr>
+		              <td></td>
 		              <td></td>
 		              <td></td>
 		              <td></td>
@@ -130,6 +133,7 @@
 	                  <th>添加时间</th>
 	                  <th>更新时间</th>
 	                  <th>所属网页</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              	{% for plug_list in plug_lists %}
@@ -142,21 +146,23 @@
 			              		<td>{{plug.plug_starttime}}</td>
 			              		<td>{{plug.plug_updatetime}}</td>
 			              		<td><a href={{plug.plug_webinfo}} target = "_blank" >{{plug.plug_webinfo}}</a></td>
+			              		<td><button class="btn btn-warning btn-xs btn-edit" data-edit-url="{% url 'edit_plug' plug.pk %}">编辑</button></td>
 		              		</tr>
 		              	</tbody>
 		              	{% endfor %}
 		              {% endif %}
 		            {% endfor %}
 	              <tbody>
-		               <tr>
-			              <td></td>
-			              <td></td>
-			              <td></td>
-			              <td></td>
-			              <td><button class="btn btn-info btn-xs" data-toggle="modal" data-target="#plug_add"><span class="glyphicon glyphicon-plus"></span>添加信息</button></td>
-		               </tr>
+	               <tr>
+		              <td></td>
+		              <td></td>
+		              <td></td>
+		              <td></td>
+		              <td></td>
+		              <td><button class="btn btn-info btn-xs" data-toggle="modal" data-target="#plug_add"><span class="glyphicon glyphicon-plus"></span>添加信息</button></td>
+	               </tr>
 	              </tbody>
-	          </table>
+		          </table>
 		</div>
 	</div>
 	<div class="tab-pane fade" id="server">
@@ -169,6 +175,7 @@
 	                  <th>操作系统</th>
 	                  <th>添加时间</th>
 	                  <th>更新时间</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              {% if server_list %}
@@ -176,10 +183,11 @@
 	              	<tbody>
 	              		<tr>
 	              			<td >{{server.server_name}}</td>
-		              		<td>{{server.server_ip}}</td>
-		              		<td>{{server.server_os}}</td>
-		              		<td>{{server.server_starttime}}</td>
-		              		<td>{{server.server_updatetime}}</td>
+			              		<td>{{server.server_ip}}</td>
+			              		<td>{{server.server_os}}</td>
+			              		<td>{{server.server_starttime}}</td>
+			              		<td>{{server.server_updatetime}}</td>
+			              		<td><button class="btn btn-warning btn-xs btn-edit" data-edit-url="{% url 'edit_server' server.pk %}">编辑</button></td>
 	              		</tr>
 	              	</tbody>
 	              	{% endfor %}
@@ -188,6 +196,7 @@
 	              {% endif %}
 	               <tbody>
 	               <tr>
+		              <td></td>
 		              <td></td>
 		              <td></td>
 		              <td></td>
@@ -204,6 +213,7 @@
 	                  <th>对应服务</th>
 	                  <th>应用版本</th>
 	                  <th>所属服务器</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              	{% for port_list in port_lists %}
@@ -216,6 +226,7 @@
 			              		<td>{{port.product}}</td>
 			              		<td>{{port.version}}</td>
 			              		<td>{{port.port_server}}</td>
+			              		<td><button class="btn btn-warning btn-xs btn-edit" data-edit-url="{% url 'edit_port' port.pk %}">编辑</button></td>
 		              		</tr>
 		              	</tbody>
 		              	{% endfor %}
@@ -227,6 +238,7 @@
 		              <td></td>
 		              <td></td>
 		              <td></td>
+		              <td></td>
 		              <td><button class="btn btn-info btn-xs" data-toggle="modal" data-target="#port_add"><span class="glyphicon glyphicon-plus"></span>添加信息</button></td>
 	               </tr>
 	              </tbody>
@@ -234,6 +246,8 @@
 		</div>
 	</div>
 	{% include 'SRCinfo/info_add.html' %}
+	{% include 'SRCinfo/_edit_modal.html' %}
+	{% include 'SRCinfo/_edit_js.html' %}
 </div>
 
 

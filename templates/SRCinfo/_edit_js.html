@@ -1,0 +1,79 @@
+<!-- 编辑功能 JavaScript（依赖 jQuery，项目已引入） -->
+<script type="text/javascript">
+(function() {
+    // 点击"编辑"按钮 → AJAX GET 获取预填表单 → 填入模态框 → 显示
+    $(document).on('click', '.btn-edit', function(e) {
+        e.preventDefault();
+        var url = $(this).data('edit-url');
+        $('#edit-errors').hide();
+        $('#edit-form-container').html(
+            '<div style="text-align:center; padding:20px;">' +
+            '<span class="glyphicon glyphicon-refresh"></span> 加载中...</div>'
+        );
+        $('#edit-modal').modal('show');
+        $.ajax({
+            url: url,
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data.success) {
+                    $('#edit-form-container').html(data.form_html);
+                } else {
+                    $('#edit-form-container').html(
+                        '<div class="alert alert-danger">加载失败，请重试</div>'
+                    );
+                }
+            },
+            error: function() {
+                $('#edit-form-container').html(
+                    '<div class="alert alert-danger">网络错误，请重试</div>'
+                );
+            }
+        });
+    });
+
+    // AJAX 提交编辑表单 → 成功则刷新页面，失败则在模态框内显示错误
+    $(document).on('submit', '#edit-form', function(e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $form.find('button[type=submit]');
+        $btn.prop('disabled', true).text('保存中...');
+
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: $form.serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if (data.success) {
+                    // 刷新页面，所有数据从数据库重新查询渲染，保证一致
+                    location.reload();
+                } else {
+                    // 在模态框内显示验证错误，不关闭模态框
+                    var html = '<strong>请检查输入：</strong><ul>';
+                    for (var field in data.errors) {
+                        var msgs = data.errors[field];
+                        for (var i = 0; i < msgs.length; i++) {
+                            html += '<li>' + field + ': ' + msgs[i] + '</li>';
+                        }
+                    }
+                    html += '</ul>';
+                    $('#edit-errors').html(html).show();
+                    $btn.prop('disabled', false).text('保存修改');
+                }
+            },
+            error: function() {
+                $('#edit-errors').html(
+                    '<strong>网络错误，请重试</strong>'
+                ).show();
+                $btn.prop('disabled', false).text('保存修改');
+            }
+        });
+    });
+
+    // 模态框关闭时重置按钮状态
+    $('#edit-modal').on('hidden.bs.modal', function() {
+        $('#edit-errors').hide();
+    });
+})();
+</script>

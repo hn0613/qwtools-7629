@@ -76,3 +76,70 @@ class PortForms(ModelForm):
                    'version': TextInput(attrs={'class':'form-control','placeholder':'应用版本'}),
                    'port_server': Select(attrs={'class':'form-control'}),
                    }
+
+
+# ============ 编辑专用表单（排除外键，防止编辑时改变归属关系）============
+
+class CompanyInfoEditForm(ModelForm):
+    class Meta:
+        model = CompanyInfo
+        exclude = ['company_id','company_starttime','company_updatetime']
+        widgets = {
+                   'company_src_name': TextInput(attrs={'class':'form-control','placeholder':'XX安全中心'}),
+                   'company_src_www': URLInput(attrs={'class':'form-control','placeholder':'https://xxxx.xx'}),
+                   'company_name': TextInput(attrs={'class':'form-control','placeholder':'XX公司'}),
+                   'company_www': URLInput(attrs={'class':'form-control','placeholder':'https://xxxx.xx'}),
+                   'company_ioc': TextInput(attrs={'class':'form-control','placeholder':'https://xxxx.xx/xx.png'}),
+                   }
+
+class SubDomainEditForm(ModelForm):
+    class Meta:
+        model = Subdomain
+        exclude = ['subdomain_company','subdomain_starttime','subdomain_updatetime','subdomain_id']
+        widgets = {
+                   'subdomain_name': TextInput(attrs={'class':'form-control','placeholder':'子域名名称'}),
+                   'subdomain_www': URLInput(attrs={'class':'form-control','placeholder':'https://xxxx.xx'}),
+                   }
+
+class WebinfoEditForm(ModelForm):
+    class Meta:
+        model = Webinfo
+        exclude = ['web_subdomain','web_id','web_starttime','web_updatetime']
+        widgets = {
+                   'web_url': URLInput(attrs={'class':'form-control','placeholder':'网页链接'}),
+                   'web_front': TextInput(attrs={'class':'form-control','placeholder':'前端语言'}),
+                   'web_language': TextInput(attrs={'class':'form-control','placeholder':'开发语言'}),
+                   'web_framework': TextInput(attrs={'class':'form-control','placeholder':'开发框架'}),
+                   'web_template': TextInput(attrs={'class':'form-control','placeholder':'网站模板'}),
+                   'web_container': TextInput(attrs={'class':'form-control','placeholder':'WEB容器'}),
+                   }
+
+class ServerEditForm(ModelForm):
+    class Meta:
+        model = Server
+        exclude = ['server_company','server_subdomain','server_starttime','server_updatetime']
+        widgets = {
+                   'server_name': TextInput(attrs={'class':'form-control','placeholder':'服务器名称'}),
+                   'server_ip': TextInput(attrs={'class':'form-control','placeholder':'服务器IP'}),
+                   'server_os': TextInput(attrs={'class':'form-control','placeholder':'操作系统'}),
+                   }
+
+class PlugEditForm(ModelForm):
+    class Meta:
+        model = Plug
+        exclude = ['plug_webinfo','plug_starttime','plug_updatetime']
+        widgets = {
+                   'plug_name': TextInput(attrs={'class':'form-control','placeholder':'组件名称'}),
+                   'plug_version': TextInput(attrs={'class':'form-control','placeholder':'组件版本'}),
+                   }
+
+class PortEditForm(ModelForm):
+    class Meta:
+        model = Port
+        exclude = ['port_server','cpe']
+        widgets = {
+                   'name': TextInput(attrs={'class':'form-control','placeholder':'应用名称'}),
+                   'port': TextInput(attrs={'class':'form-control','placeholder':'开放端口'}),
+                   'product': TextInput(attrs={'class':'form-control','placeholder':'对应服务'}),
+                   'version': TextInput(attrs={'class':'form-control','placeholder':'应用版本'}),
+                   }

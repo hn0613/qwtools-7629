@@ -34,7 +34,7 @@
 		                  	<span class="sr-only">Toggle Dropdown</span>
 		                  	</button>
 		                  	<ul class="dropdown-menu" role="menu">
-		                  		<li><a href='#'>更新</a></li>
+		                  		<li><a href="#" class="btn-edit" data-edit-url="{% url 'edit_subdomain' WEB.pk %}">更新</a></li>
 		                  		<li><a data-href="{% url 'delete_WEB' WEB.subdomain_id %}" data-toggle="modal" data-target="#confirm-delete">删除</a></li>
 		                  		
 		                  	</ul>
@@ -79,4 +79,6 @@
 			</div>
     </div>
 {% include 'SRCinfo/SubDomain_add.html' %}
+{% include 'SRCinfo/_edit_modal.html' %}
+{% include 'SRCinfo/_edit_js.html' %}
 {% endblock %}

@@ -1,11 +1,16 @@
 #coding:utf-8
-from django.shortcuts import render,HttpResponseRedirect
+from django.shortcuts import render,HttpResponseRedirect,get_object_or_404
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from SRCCompany.models import CompanyInfo,Subdomain,Webinfo,Server,Port,Plug
 from SRCCompany.forms import CompanyInfoForms,SubDomainForms
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.decorators import login_required 
 from SRCCompany.forms import WebinfoForms,ServerForms,PlugForms,PortForms
+from SRCCompany.forms import (CompanyInfoEditForm, SubDomainEditForm,
+    WebinfoEditForm, ServerEditForm, PlugEditForm, PortEditForm)
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.decorators import login_required
 
 import time
 
@@ -270,3 +275,68 @@ def Port_add(request,subdomain_id):
     else:
         error = '请求错误'
         return render(request,'error.html',{'error':error})
+
+
+# ============ 编辑视图（AJAX：GET 返回预填表单，POST 原地更新）============
+
+def _edit_dispatch(request, obj, FormClass, url_name, pk):
+    '''编辑通用逻辑：GET 返回表单 HTML，POST 保存并返回 JSON'''
+    if request.method == 'GET':
+        form = FormClass(instance=obj)
+        action_url = reverse(url_name, args=[pk])
+        form_html = render_to_string(
+            'SRCinfo/_edit_form.html',
+            {'form': form, 'action_url': action_url},
+            request=request
+        )
+        return JsonResponse({'success': True, 'form_html': form_html})
+    elif request.method == 'POST':
+        form = FormClass(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+
+
+@csrf_protect
+@login_required
+def Company_edit(request, pk):
+    '''编辑公司信息'''
+    obj = get_object_or_404(CompanyInfo, pk=pk)
+    return _edit_dispatch(request, obj, CompanyInfoEditForm, 'edit_company', pk)
+
+@csrf_protect
+@login_required
+def Subdomain_edit(request, pk):
+    '''编辑子域名信息'''
+    obj = get_object_or_404(Subdomain, pk=pk)
+    return _edit_dispatch(request, obj, SubDomainEditForm, 'edit_subdomain', pk)
+
+@csrf_protect
+@login_required
+def Webinfo_edit(request, pk):
+    '''编辑网站信息'''
+    obj = get_object_or_404(Webinfo, pk=pk)
+    return _edit_dispatch(request, obj, WebinfoEditForm, 'edit_webinfo', pk)
+
+@csrf_protect
+@login_required
+def Server_edit(request, pk):
+    '''编辑服务器信息'''
+    obj = get_object_or_404(Server, pk=pk)
+    return _edit_dispatch(request, obj, ServerEditForm, 'edit_server', pk)
+
+@csrf_protect
+@login_required
+def Plug_edit(request, pk):
+    '''编辑组件信息'''
+    obj = get_object_or_404(Plug, pk=pk)
+    return _edit_dispatch(request, obj, PlugEditForm, 'edit_plug', pk)
+
+@csrf_protect
+@login_required
+def Port_edit(request, pk):
+    '''编辑端口信息'''
+    obj = get_object_or_404(Port, pk=pk)
+    return _edit_dispatch(request, obj, PortEditForm, 'edit_port', pk)
