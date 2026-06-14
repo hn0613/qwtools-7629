@@ -4,8 +4,9 @@ from django.views.decorators.csrf import csrf_protect
 from SRCCompany.models import CompanyInfo,Subdomain,Webinfo,Server,Port,Plug
 from SRCCompany.forms import CompanyInfoForms,SubDomainForms
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.decorators import login_required 
+from django.contrib.auth.decorators import login_required
 from SRCCompany.forms import WebinfoForms,ServerForms,PlugForms,PortForms
+from django.db.models import Q
 
 import time
 
@@ -270,3 +271,112 @@ def Port_add(request,subdomain_id):
     else:
         error = '请求错误'
         return render(request,'error.html',{'error':error})
+
+
+@login_required
+def search_global(request):
+    query = request.GET.get('q', '').strip()
+    results = []
+
+    if query:
+        # 搜索公司
+        companies = CompanyInfo.objects.filter(
+            Q(company_name__icontains=query) |
+            Q(company_src_name__icontains=query) |
+            Q(company_www__icontains=query) |
+            Q(company_src_www__icontains=query)
+        )
+        for c in companies:
+            results.append({
+                'type': '公司',
+                'title': c.company_name,
+                'detail': c.company_src_name,
+                'breadcrumb': c.company_name,
+                'url': '/SRC/WEB/' + str(c.company_id),
+            })
+
+        # 搜索子域名
+        subdomains = Subdomain.objects.filter(
+            Q(subdomain_name__icontains=query) |
+            Q(subdomain_www__icontains=query)
+        ).select_related('subdomain_company')
+        for s in subdomains:
+            results.append({
+                'type': '子域名',
+                'title': s.subdomain_www,
+                'detail': s.subdomain_name or '',
+                'breadcrumb': s.subdomain_company.company_name + ' > ' + (s.subdomain_name or str(s.subdomain_www)),
+                'url': '/SRC/subdomaininfo/' + str(s.subdomain_id) + '/',
+            })
+
+        # 搜索网站信息
+        webinfos = Webinfo.objects.filter(
+            Q(web_url__icontains=query) |
+            Q(web_framework__icontains=query) |
+            Q(web_container__icontains=query) |
+            Q(web_language__icontains=query)
+        ).select_related('web_subdomain__subdomain_company')
+        for w in webinfos:
+            sd = w.web_subdomain
+            results.append({
+                'type': '网站',
+                'title': w.web_url or '',
+                'detail': ' / '.join(filter(None, [w.web_language, w.web_framework, w.web_container])),
+                'breadcrumb': sd.subdomain_company.company_name + ' > ' + (sd.subdomain_name or str(sd.subdomain_www)),
+                'url': '/SRC/subdomaininfo/' + str(sd.subdomain_id) + '/',
+            })
+
+        # 搜索服务器
+        servers = Server.objects.filter(
+            Q(server_name__icontains=query) |
+            Q(server_ip__icontains=query) |
+            Q(server_os__icontains=query)
+        ).select_related('server_subdomain__subdomain_company')
+        for sv in servers:
+            sd = sv.server_subdomain
+            results.append({
+                'type': '服务器',
+                'title': sv.server_ip,
+                'detail': ' / '.join(filter(None, [sv.server_name, sv.server_os])),
+                'breadcrumb': sd.subdomain_company.company_name + ' > ' + (sd.subdomain_name or str(sd.subdomain_www)),
+                'url': '/SRC/subdomaininfo/' + str(sd.subdomain_id) + '/',
+            })
+
+        # 搜索端口
+        ports = Port.objects.filter(
+            Q(name__icontains=query) |
+            Q(port__icontains=query) |
+            Q(product__icontains=query) |
+            Q(version__icontains=query)
+        ).select_related('port_server__server_subdomain__subdomain_company')
+        for p in ports:
+            sv = p.port_server
+            sd = sv.server_subdomain
+            results.append({
+                'type': '端口',
+                'title': str(p.port) + ' (' + (p.product or '') + ')',
+                'detail': ' / '.join(filter(None, [p.name, p.version])),
+                'breadcrumb': sd.subdomain_company.company_name + ' > ' + (sd.subdomain_name or str(sd.subdomain_www)) + ' > ' + str(sv.server_ip),
+                'url': '/SRC/subdomaininfo/' + str(sd.subdomain_id) + '/',
+            })
+
+        # 搜索组件
+        plugs = Plug.objects.filter(
+            Q(plug_name__icontains=query) |
+            Q(plug_version__icontains=query)
+        ).select_related('plug_webinfo__web_subdomain__subdomain_company')
+        for pl in plugs:
+            sd = pl.plug_webinfo.web_subdomain
+            results.append({
+                'type': '组件',
+                'title': pl.plug_name,
+                'detail': pl.plug_version or '',
+                'breadcrumb': sd.subdomain_company.company_name + ' > ' + (sd.subdomain_name or str(sd.subdomain_www)),
+                'url': '/SRC/subdomaininfo/' + str(sd.subdomain_id) + '/',
+            })
+
+    return render(request, 'SRCinfo/search_results.html', {
+        'query': query,
+        'results': results,
+        'result_count': len(results),
+    })

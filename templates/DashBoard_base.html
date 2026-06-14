@@ -1,4 +1,4 @@
-{% load staticfiles %}
+{% load static %}
 
 <!DOCTYPE html>
 <html>
@@ -52,8 +52,8 @@
               </ul>
             </li>
           </ul>
-          <form class="navbar-form navbar-right">
-            <input type="text" class="form-control" placeholder="Search...">
+          <form class="navbar-form navbar-right" action="{% url 'search_global' %}" method="GET">
+            <input type="text" class="form-control" name="q" placeholder="搜索公司/域名/IP/组件...">
           </form>
         </div>
       </div>

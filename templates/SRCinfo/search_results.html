@@ -1,0 +1,47 @@
+{% extends "DashBoard_base.html" %}
+
+<meta charset="UTF-8">
+
+{% block dashboard %}
+    <h2 class="sub-header">搜索结果
+        {% if query %}
+            <small> —— "{{ query }}" 共 {{ result_count }} 条结果</small>
+        {% endif %}
+    </h2>
+    <div class="table-responsive">
+        {% if results %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>类型</th>
+                    <th>名称</th>
+                    <th>详细信息</th>
+                    <th>所属层级</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in results %}
+                <tr>
+                    <td><span class="label label-info">{{ item.type }}</span></td>
+                    <td>{{ item.title }}</td>
+                    <td>{{ item.detail }}</td>
+                    <td>{{ item.breadcrumb }}</td>
+                    <td><a href="{{ item.url }}" class="btn btn-info btn-xs">查看详情</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            {% if query %}
+                <div class="alert alert-warning" style="margin-top: 20px;">
+                    未找到与 "{{ query }}" 相关的资产信息，请尝试其他关键词。
+                </div>
+            {% else %}
+                <div class="alert alert-info" style="margin-top: 20px;">
+                    请输入关键词进行搜索，支持公司名、域名、IP、组件名、端口等。
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
