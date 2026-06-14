@@ -1,0 +1,43 @@
+<meta charset="UTF-8">
+<div class="modal fade" id="src_edit" tabindex="-1" role="dialog" aria-labelledby="SRC_EDIT" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="SRC_EDIT">
+					编辑应急响应中心信息
+				</h4>
+			</div>
+			<div class="modal-body">
+				<form id="src_edit_form" method="POST" action="">
+					{% csrf_token %}
+					<table>
+					<tr><th><label>应急响应中心:</label></th><td><input type="text" name="company_src_name" id="edit_company_src_name" class="form-control" maxlength="50" required /></td></tr>
+					<tr><th><label>应急中心地址:</label></th><td><input type="url" name="company_src_www" id="edit_company_src_www" class="form-control" required /></td></tr>
+					<tr><th><label>企业名称:</label></th><td><input type="text" name="company_name" id="edit_company_name" class="form-control" maxlength="50" required /></td></tr>
+					<tr><th><label>官网地址:</label></th><td><input type="url" name="company_www" id="edit_company_www" class="form-control" required /></td></tr>
+					<tr><th><label>企业图标:</label></th><td><input type="text" name="company_ioc" id="edit_company_ioc" class="form-control" /></td></tr>
+					</table>
+					<div align='right' style="margin-top:10px;">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="submit" class="btn btn-primary">保存修改</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+$('#src_edit').on('show.bs.modal', function(e) {
+	var trigger = $(e.relatedTarget);
+	var form = $(this).find('#src_edit_form');
+	form.attr('action', '/SRC/editsrc/' + trigger.data('company-id') + '/');
+	form.find('#edit_company_src_name').val(trigger.data('src-name'));
+	form.find('#edit_company_src_www').val(trigger.data('src-www'));
+	form.find('#edit_company_name').val(trigger.data('name'));
+	form.find('#edit_company_www').val(trigger.data('www'));
+	form.find('#edit_company_ioc').val(trigger.data('ioc'));
+});
+</script>

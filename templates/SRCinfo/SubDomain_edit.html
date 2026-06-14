@@ -1,0 +1,37 @@
+<meta charset="UTF-8">
+<div class="modal fade" id="subdomain_edit" tabindex="-1" role="dialog" aria-labelledby="SUBDOMAIN_EDIT" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="SUBDOMAIN_EDIT">
+					编辑子域名信息
+				</h4>
+			</div>
+			<div class="modal-body">
+				<form id="subdomain_edit_form" method="POST" action="">
+					{% csrf_token %}
+					<table>
+					<tr><th><label>子域名名称:</label></th><td><input type="text" name="subdomain_name" id="edit_subdomain_name" class="form-control" maxlength="50" /></td></tr>
+					<tr><th><label>子域名地址:</label></th><td><input type="url" name="subdomain_www" id="edit_subdomain_www" class="form-control" required /></td></tr>
+					</table>
+					<div align='right' style="margin-top:10px;">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="submit" class="btn btn-primary">保存修改</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+$('#subdomain_edit').on('show.bs.modal', function(e) {
+	var trigger = $(e.relatedTarget);
+	var form = $(this).find('#subdomain_edit_form');
+	form.attr('action', '/SRC/editsubdomain/' + trigger.data('subdomain-id') + '/');
+	form.find('#edit_subdomain_name').val(trigger.data('subdomain-name'));
+	form.find('#edit_subdomain_www').val(trigger.data('subdomain-www'));
+});
+</script>

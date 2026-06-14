@@ -1,4 +1,4 @@
-{% extends "DashBoard_base.html" %} 
+{% extends "DashBoard_base.html" %}
 
 <meta charset="UTF-8">
 
@@ -93,18 +93,27 @@
 	                  <th>开发框架</th>
 	                  <th>网站模板</th>
 	                  <th>WEB容器</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              {% if webinfo_list %}
 	              	{% for webinfo in webinfo_list %}
 	              	<tbody>
 	              		<tr>
-	              			<td><a href={{WEB.subdomain_www}} target = "_blank">{{webinfo.web_url}}</a></td>
+	              			<td><a href={{webinfo.web_url}} target = "_blank">{{webinfo.web_url}}</a></td>
 	              			<td>{{webinfo.web_front}}</td>
 		              		<td>{{webinfo.web_language}}</td>
 		              		<td>{{webinfo.web_framework}}</td>
 		              		<td>{{webinfo.web_template}}</td>
 		              		<td>{{webinfo.web_container}}</td>
+		              		<td><a href="#" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#web_edit"
+		              		    data-id="{{webinfo.id}}"
+		              		    data-web-url="{{webinfo.web_url|default_if_none:""}}"
+		              		    data-web-front="{{webinfo.web_front|default_if_none:""}}"
+		              		    data-web-language="{{webinfo.web_language|default_if_none:""}}"
+		              		    data-web-framework="{{webinfo.web_framework|default_if_none:""}}"
+		              		    data-web-template="{{webinfo.web_template|default_if_none:""}}"
+		              		    data-web-container="{{webinfo.web_container|default_if_none:""}}"><span class="glyphicon glyphicon-pencil"></span> 编辑</a></td>
 	              		</tr>
 	              	</tbody>
 	              	{% endfor %}
@@ -113,6 +122,7 @@
 	              {% endif %}
 	               <tbody>
 	               <tr>
+		              <td></td>
 		              <td></td>
 		              <td></td>
 		              <td></td>
@@ -130,6 +140,7 @@
 	                  <th>添加时间</th>
 	                  <th>更新时间</th>
 	                  <th>所属网页</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              	{% for plug_list in plug_lists %}
@@ -142,6 +153,11 @@
 			              		<td>{{plug.plug_starttime}}</td>
 			              		<td>{{plug.plug_updatetime}}</td>
 			              		<td><a href={{plug.plug_webinfo}} target = "_blank" >{{plug.plug_webinfo}}</a></td>
+			              		<td><a href="#" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#plug_edit"
+			              		    data-id="{{plug.id}}"
+			              		    data-plug-name="{{plug.plug_name}}"
+			              		    data-plug-version="{{plug.plug_version|default_if_none:""}}"
+			              		    data-plug-webinfo-id="{{plug.plug_webinfo.id}}"><span class="glyphicon glyphicon-pencil"></span> 编辑</a></td>
 		              		</tr>
 		              	</tbody>
 		              	{% endfor %}
@@ -149,6 +165,7 @@
 		            {% endfor %}
 	              <tbody>
 		               <tr>
+			              <td></td>
 			              <td></td>
 			              <td></td>
 			              <td></td>
@@ -169,6 +186,7 @@
 	                  <th>操作系统</th>
 	                  <th>添加时间</th>
 	                  <th>更新时间</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              {% if server_list %}
@@ -180,6 +198,11 @@
 		              		<td>{{server.server_os}}</td>
 		              		<td>{{server.server_starttime}}</td>
 		              		<td>{{server.server_updatetime}}</td>
+		              		<td><a href="#" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#server_edit"
+		              		    data-id="{{server.id}}"
+		              		    data-server-name="{{server.server_name|default_if_none:""}}"
+		              		    data-server-ip="{{server.server_ip}}"
+		              		    data-server-os="{{server.server_os|default_if_none:""}}"><span class="glyphicon glyphicon-pencil"></span> 编辑</a></td>
 	              		</tr>
 	              	</tbody>
 	              	{% endfor %}
@@ -188,6 +211,7 @@
 	              {% endif %}
 	               <tbody>
 	               <tr>
+		              <td></td>
 		              <td></td>
 		              <td></td>
 		              <td></td>
@@ -204,6 +228,7 @@
 	                  <th>对应服务</th>
 	                  <th>应用版本</th>
 	                  <th>所属服务器</th>
+	                  <th>操作</th>
 	                </tr>
 	              </thead>
 	              	{% for port_list in port_lists %}
@@ -216,6 +241,13 @@
 			              		<td>{{port.product}}</td>
 			              		<td>{{port.version}}</td>
 			              		<td>{{port.port_server}}</td>
+			              		<td><a href="#" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#port_edit"
+			              		    data-id="{{port.id}}"
+			              		    data-port-name="{{port.name|default_if_none:""}}"
+			              		    data-port-port="{{port.port}}"
+			              		    data-port-product="{{port.product|default_if_none:""}}"
+			              		    data-port-version="{{port.version|default_if_none:""}}"
+			              		    data-port-server-id="{{port.port_server.id}}"><span class="glyphicon glyphicon-pencil"></span> 编辑</a></td>
 		              		</tr>
 		              	</tbody>
 		              	{% endfor %}
@@ -227,6 +259,7 @@
 		              <td></td>
 		              <td></td>
 		              <td></td>
+		              <td></td>
 		              <td><button class="btn btn-info btn-xs" data-toggle="modal" data-target="#port_add"><span class="glyphicon glyphicon-plus"></span>添加信息</button></td>
 	               </tr>
 	              </tbody>
@@ -234,6 +267,7 @@
 		</div>
 	</div>
 	{% include 'SRCinfo/info_add.html' %}
+	{% include 'SRCinfo/info_edit.html' %}
 </div>
 
 

@@ -19,4 +19,10 @@ urlpatterns = [
     url(r'^addplug/(.+)/$', views.Plug_add, name='add_webplug'),
     url(r'^addserver/(.+)/$', views.Server_add, name='add_webserver'),
     url(r'^addserverport/(.+)/$', views.Port_add, name='add_serverport'),
+    url(r'^editsrc/(.+)/$', views.update_SRC, name='update_SRC'),
+    url(r'^editsubdomain/(.+)/$', views.update_SubDomain, name='update_SubDomain'),
+    url(r'^editweb/(\d+)/$', views.update_Webinfo, name='update_Webinfo'),
+    url(r'^editplug/(\d+)/$', views.update_Plug, name='update_Plug'),
+    url(r'^editserver/(\d+)/$', views.update_Server, name='update_Server'),
+    url(r'^editport/(\d+)/$', views.update_Port, name='update_Port'),
 ]

@@ -270,3 +270,104 @@ def Port_add(request,subdomain_id):
     else:
         error = '请求错误'
         return render(request,'error.html',{'error':error})
+
+@csrf_protect
+@login_required
+def update_SRC(request, company_id):
+    if request.method == "POST":
+        obj = CompanyInfo.objects.get(company_id=company_id)
+        form = CompanyInfoForms(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/SRC')
+        else:
+            error = '更新失败，请检查输入'
+            return render(request, 'error.html', {'error': error})
+    else:
+        error = '请求错误'
+        return render(request, 'error.html', {'error': error})
+
+@csrf_protect
+@login_required
+def update_SubDomain(request, subdomain_id):
+    if request.method == "POST":
+        obj = Subdomain.objects.get(subdomain_id=subdomain_id)
+        company_id = obj.subdomain_company.company_id
+        form = SubDomainForms(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/SRC/WEB/' + str(company_id))
+        else:
+            error = '更新失败，请检查输入'
+            return render(request, 'error.html', {'error': error})
+    else:
+        error = '请求错误'
+        return render(request, 'error.html', {'error': error})
+
+@csrf_protect
+@login_required
+def update_Webinfo(request, pk):
+    if request.method == "POST":
+        obj = Webinfo.objects.get(pk=pk)
+        subdomain_id = obj.web_subdomain.subdomain_id
+        form = WebinfoForms(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+        else:
+            error = '更新失败，请检查输入'
+            return render(request, 'error.html', {'error': error})
+    else:
+        error = '请求错误'
+        return render(request, 'error.html', {'error': error})
+
+@csrf_protect
+@login_required
+def update_Server(request, pk):
+    if request.method == "POST":
+        obj = Server.objects.get(pk=pk)
+        subdomain_id = obj.server_subdomain.subdomain_id
+        form = ServerForms(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+        else:
+            error = '更新失败，请检查输入'
+            return render(request, 'error.html', {'error': error})
+    else:
+        error = '请求错误'
+        return render(request, 'error.html', {'error': error})
+
+@csrf_protect
+@login_required
+def update_Plug(request, pk):
+    if request.method == "POST":
+        obj = Plug.objects.get(pk=pk)
+        subdomain_id = obj.plug_webinfo.web_subdomain.subdomain_id
+        form = PlugForms(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+        else:
+            error = '更新失败，请检查输入'
+            return render(request, 'error.html', {'error': error})
+    else:
+        error = '请求错误'
+        return render(request, 'error.html', {'error': error})
+
+@csrf_protect
+@login_required
+def update_Port(request, pk):
+    if request.method == "POST":
+        obj = Port.objects.get(pk=pk)
+        subdomain_id = obj.port_server.server_subdomain.subdomain_id
+        form = PortForms(request.POST, instance=obj)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+        else:
+            error = '更新失败，请检查输入'
+            return render(request, 'error.html', {'error': error})
+    else:
+        error = '请求错误'
+        return render(request, 'error.html', {'error': error})

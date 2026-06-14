@@ -1,0 +1,154 @@
+<meta charset="UTF-8">
+
+<div class="modal fade" id="web_edit" tabindex="-1" role="dialog" aria-labelledby="WEB_EDIT" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">编辑网站信息</h4>
+			</div>
+			<div class="modal-body">
+				<form id="web_edit_form" method="POST" action="">
+					{% csrf_token %}
+					<table>
+					<tr><th><label>网页链接:</label></th><td><input type="url" name="web_url" id="edit_web_url" class="form-control" placeholder="网页链接" /></td></tr>
+					<tr><th><label>前端语言:</label></th><td><input type="text" name="web_front" id="edit_web_front" class="form-control" maxlength="30" placeholder="前端语言" /></td></tr>
+					<tr><th><label>开发语言:</label></th><td><input type="text" name="web_language" id="edit_web_language" class="form-control" maxlength="30" placeholder="开发语言" /></td></tr>
+					<tr><th><label>开发框架:</label></th><td><input type="text" name="web_framework" id="edit_web_framework" class="form-control" maxlength="30" placeholder="开发框架" /></td></tr>
+					<tr><th><label>网站模板:</label></th><td><input type="text" name="web_template" id="edit_web_template" class="form-control" maxlength="30" placeholder="网站模板" /></td></tr>
+					<tr><th><label>WEB容器:</label></th><td><input type="text" name="web_container" id="edit_web_container" class="form-control" maxlength="30" placeholder="WEB容器" /></td></tr>
+					</table>
+					<div align='right' style="margin-top:10px;">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="submit" class="btn btn-primary">保存修改</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="plug_edit" tabindex="-1" role="dialog" aria-labelledby="PLUG_EDIT" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">编辑组件信息</h4>
+			</div>
+			<div class="modal-body">
+				<form id="plug_edit_form" method="POST" action="">
+					{% csrf_token %}
+					<table>
+					<tr><th><label>组件名称:</label></th><td><input type="text" name="plug_name" id="edit_plug_name" class="form-control" maxlength="30" required placeholder="组件名称" /></td></tr>
+					<tr><th><label>组件版本:</label></th><td><input type="text" name="plug_version" id="edit_plug_version" class="form-control" maxlength="30" placeholder="组件版本" /></td></tr>
+					<tr><th><label>网页关联:</label></th><td><select name="plug_webinfo" id="edit_plug_webinfo" class="form-control">
+						{% for webinfo in webinfo_list %}
+						<option value="{{webinfo.id}}">{{webinfo}}</option>
+						{% endfor %}
+					</select></td></tr>
+					</table>
+					<div align='right' style="margin-top:10px;">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="submit" class="btn btn-primary">保存修改</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="server_edit" tabindex="-1" role="dialog" aria-labelledby="SERVER_EDIT" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">编辑服务器信息</h4>
+			</div>
+			<div class="modal-body">
+				<form id="server_edit_form" method="POST" action="">
+					{% csrf_token %}
+					<table>
+					<tr><th><label>服务器名称:</label></th><td><input type="text" name="server_name" id="edit_server_name" class="form-control" maxlength="50" placeholder="服务器名称" /></td></tr>
+					<tr><th><label>服务器IP:</label></th><td><input type="text" name="server_ip" id="edit_server_ip" class="form-control" required placeholder="服务器IP" /></td></tr>
+					<tr><th><label>操作系统:</label></th><td><input type="text" name="server_os" id="edit_server_os" class="form-control" maxlength="30" placeholder="操作系统" /></td></tr>
+					</table>
+					<div align='right' style="margin-top:10px;">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="submit" class="btn btn-primary">保存修改</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="port_edit" tabindex="-1" role="dialog" aria-labelledby="PORT_EDIT" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h4 class="modal-title">编辑端口信息</h4>
+			</div>
+			<div class="modal-body">
+				<form id="port_edit_form" method="POST" action="">
+					{% csrf_token %}
+					<table>
+					<tr><th><label>应用名称:</label></th><td><input type="text" name="name" id="edit_port_name" class="form-control" maxlength="30" placeholder="应用名称" /></td></tr>
+					<tr><th><label>开放端口:</label></th><td><input type="text" name="port" id="edit_port_port" class="form-control" maxlength="30" required placeholder="开放端口" /></td></tr>
+					<tr><th><label>对应服务:</label></th><td><input type="text" name="product" id="edit_port_product" class="form-control" maxlength="30" placeholder="对应服务" /></td></tr>
+					<tr><th><label>应用版本:</label></th><td><input type="text" name="version" id="edit_port_version" class="form-control" maxlength="30" placeholder="应用版本" /></td></tr>
+					<tr><th><label>服务器关联:</label></th><td><select name="port_server" id="edit_port_server" class="form-control">
+						{% for server in server_list %}
+						<option value="{{server.id}}">{{server}}</option>
+						{% endfor %}
+					</select></td></tr>
+					</table>
+					<div align='right' style="margin-top:10px;">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					<button type="submit" class="btn btn-primary">保存修改</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+$('#web_edit').on('show.bs.modal', function(e) {
+	var t = $(e.relatedTarget);
+	var form = $(this).find('#web_edit_form');
+	form.attr('action', '/SRC/editweb/' + t.data('id') + '/');
+	form.find('#edit_web_url').val(t.data('web-url'));
+	form.find('#edit_web_front').val(t.data('web-front'));
+	form.find('#edit_web_language').val(t.data('web-language'));
+	form.find('#edit_web_framework').val(t.data('web-framework'));
+	form.find('#edit_web_template').val(t.data('web-template'));
+	form.find('#edit_web_container').val(t.data('web-container'));
+});
+$('#plug_edit').on('show.bs.modal', function(e) {
+	var t = $(e.relatedTarget);
+	var form = $(this).find('#plug_edit_form');
+	form.attr('action', '/SRC/editplug/' + t.data('id') + '/');
+	form.find('#edit_plug_name').val(t.data('plug-name'));
+	form.find('#edit_plug_version').val(t.data('plug-version'));
+	form.find('#edit_plug_webinfo').val(t.data('plug-webinfo-id'));
+});
+$('#server_edit').on('show.bs.modal', function(e) {
+	var t = $(e.relatedTarget);
+	var form = $(this).find('#server_edit_form');
+	form.attr('action', '/SRC/editserver/' + t.data('id') + '/');
+	form.find('#edit_server_name').val(t.data('server-name'));
+	form.find('#edit_server_ip').val(t.data('server-ip'));
+	form.find('#edit_server_os').val(t.data('server-os'));
+});
+$('#port_edit').on('show.bs.modal', function(e) {
+	var t = $(e.relatedTarget);
+	var form = $(this).find('#port_edit_form');
+	form.attr('action', '/SRC/editport/' + t.data('id') + '/');
+	form.find('#edit_port_name').val(t.data('port-name'));
+	form.find('#edit_port_port').val(t.data('port-port'));
+	form.find('#edit_port_product').val(t.data('port-product'));
+	form.find('#edit_port_version').val(t.data('port-version'));
+	form.find('#edit_port_server').val(t.data('port-server-id'));
+});
+</script>

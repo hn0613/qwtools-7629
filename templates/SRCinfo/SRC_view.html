@@ -40,7 +40,13 @@
 		                  	<span class="sr-only">Toggle Dropdown</span>
 		                  	</button>
 		                  	<ul class="dropdown-menu" role="menu">
-		                  		<li><a href='#'>更新</a></li>
+		                  		<li><a href='#' data-toggle="modal" data-target="#src_edit"
+		                  		    data-company-id="{{SRC.company_id}}"
+		                  		    data-src-name="{{SRC.company_src_name}}"
+		                  		    data-src-www="{{SRC.company_src_www}}"
+		                  		    data-name="{{SRC.company_name}}"
+		                  		    data-www="{{SRC.company_www}}"
+		                  		    data-ioc="{{SRC.company_ioc|default_if_none:""}}">更新</a></li>
 		                  		<li><a data-href="{% url 'delete_SRC' SRC.company_id %}" data-toggle="modal" data-target="#confirm-delete">删除</a></li>
 		                  		
 		                  	</ul>
@@ -89,4 +95,5 @@
 
 
 {% include 'SRCinfo/SRC_add.html' %}
+{% include 'SRCinfo/SRC_edit.html' %}
 {% endblock %}
