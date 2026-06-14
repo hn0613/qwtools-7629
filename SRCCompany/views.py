@@ -1,272 +1,200 @@
 #coding:utf-8
-from django.shortcuts import render,HttpResponseRedirect
+from django.shortcuts import render, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
-from SRCCompany.models import CompanyInfo,Subdomain,Webinfo,Server,Port,Plug
-from SRCCompany.forms import CompanyInfoForms,SubDomainForms
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.decorators import login_required 
-from SRCCompany.forms import WebinfoForms,ServerForms,PlugForms,PortForms
+from django.contrib.auth.decorators import login_required
 
-import time
+from SRCCompany.models import CompanyInfo
+from SRCCompany.forms import (
+    CompanyInfoForms, SubDomainForms,
+    WebinfoForms, ServerForms, PlugForms, PortForms
+)
+from SRCCompany import services
+from SRCCompany.utils import paginate
+
 
 # Create your views here.
 @csrf_protect
 @login_required
 def view_SRC(request):
     '''
-            查看
+    企业列表 + 添加企业。
+    POST 表单无效时落到 GET 路径，模板直接显示表单校验错误，
+    不再用 error 变量，消除原来非 GET/POST 时 UnboundLocalError 的崩溃。
     '''
     if request.method == "POST":
         form = CompanyInfoForms(request.POST)
         if form.is_valid():
-            try:
-                num = CompanyInfo.objects.latest('id').id
-            except Exception:
-                num = 0
-            company_id = time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
-            company_src_name = form.cleaned_data['company_src_name']
-            company_src_www = form.cleaned_data['company_src_www']
-            company_name = form.cleaned_data['company_name']
-            company_www = form.cleaned_data['company_www']
-            company_ioc = form.cleaned_data['company_ioc']
-            
-            CompanyInfo.objects.get_or_create(
-                                          company_id = company_id,
-                                          company_src_name = company_src_name,
-                                          company_src_www = company_src_www,
-                                          company_name = company_name,
-                                          company_www = company_www,
-                                          company_ioc = company_ioc,
-                                        )
+            services.create_company(form)
             return HttpResponseRedirect('/SRC')
-        else:
-            error = '添加失败，请检查输入'
-            
-    if request.method == "GET":
-        SRC_lists = CompanyInfo.objects.all().order_by('company_updatetime')
+        # 表单无效：落到下方 GET 路径，模板渲染时会显示表单错误
+    else:
         form = CompanyInfoForms()
-        
-        paginator = Paginator(SRC_lists, 7)
-        
-        page = request.GET.get('page')
-        try:
-            SRC_list = paginator.page(page)
-        except PageNotAnInteger:
-            SRC_list = paginator.page(1)
-        except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
-            SRC_list = paginator.page(paginator.num_pages)
-        return render(request,'SRCinfo/SRC_view.html',{'SRC_list':SRC_list,'form':form})
-    return render(request,'error.html',{'error':error})
+
+    SRC_lists = CompanyInfo.objects.all().order_by('company_updatetime')
+    SRC_list = paginate(SRC_lists, request.GET.get('page'))
+    return render(request, 'SRCinfo/SRC_view.html', {
+        'SRC_list': SRC_list,
+        'form': form,
+    })
+
 
 @login_required
-def delete_SRC(request,company_id):
+def delete_SRC(request, company_id):
     '''
-                删除
+    删除企业。通过 services 层查找，找不到时返回 404 而非 500。
     '''
-    if company_id:
-        CompanyInfo.objects.get(company_id = company_id).delete()
+    services.delete_company(company_id)
     return HttpResponseRedirect('/SRC')
+
 
 @csrf_protect
 @login_required
-def view_SubDomain(request,company_id):
+def view_SubDomain(request, company_id):
     '''
-            查看
+    子域名列表 + 添加子域名。
+    通过 services 查找上级企业，找不到时 404。
     '''
+    company = services.get_company_or_404(company_id)
+
     if request.method == "POST":
         form = SubDomainForms(request.POST)
         if form.is_valid():
-            try:
-                num = Subdomain.objects.latest('id').id
-            except Exception:
-                num = 0
-            subdomain_id = 'sd' + time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
-            subdomain_name = form.cleaned_data['subdomain_name']
-            subdomain_www = form.cleaned_data['subdomain_www']
-            
-            Subdomain.objects.get_or_create(
-                                          subdomain_id = subdomain_id,
-                                          subdomain_name = subdomain_name,
-                                          subdomain_www = subdomain_www,
-                                          subdomain_company = CompanyInfo.objects.get(company_id=company_id),
-                                        )
-            return HttpResponseRedirect('/SRC/WEB/'+company_id)
-        else:
-            error = '添加失败，请检查输入'
-            
-    if request.method == "GET":
-        SRC = CompanyInfo.objects.get(company_id=company_id)
-        SubDomain_lists = SRC.subdomain_in_company.all().order_by('subdomain_updatetime')
+            services.create_subdomain(form, company)
+            return HttpResponseRedirect('/SRC/WEB/' + company_id)
+        # 表单无效：落到下方 GET 路径
+    else:
         form = SubDomainForms()
-        
-        paginator = Paginator(SubDomain_lists, 7)
-        
-        page = request.GET.get('page')
-        try:
-            WEB_list = paginator.page(page)
-        except PageNotAnInteger:
-            WEB_list = paginator.page(1)
-        except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
-            WEB_list = paginator.page(paginator.num_pages)
-        return render(request,'SRCinfo/SubDomain.html',{'WEB_list':WEB_list,'form':form})
-    return render(request,'error.html',{'error':error})
+
+    SubDomain_lists = company.subdomain_in_company.all().order_by('subdomain_updatetime')
+    WEB_list = paginate(SubDomain_lists, request.GET.get('page'))
+    return render(request, 'SRCinfo/SubDomain.html', {
+        'WEB_list': WEB_list,
+        'form': form,
+    })
+
 
 @login_required
-def delete_WEB(request,subdomain_id):
+def delete_WEB(request, subdomain_id):
     '''
-                删除
+    删除子域名，重定向到所属企业的子域名列表。
+    通过 services 层查找并返回 company_id，找不到时 404。
     '''
-    if subdomain_id:
-        WEB = Subdomain.objects.get(subdomain_id = subdomain_id)
-        company_id = WEB.subdomain_company.company_id
-        WEB.delete()
-    return HttpResponseRedirect('/SRC/WEB/'+str(company_id))
+    company_id = services.delete_subdomain(subdomain_id)
+    return HttpResponseRedirect('/SRC/WEB/' + str(company_id))
+
 
 @login_required
-def view_WEBinfo(request,subdomain_id):
-    subdomain_list = Subdomain.objects.filter(subdomain_id = subdomain_id)
-    #company_id = subdomain.subdomain_company.company_id
-    if subdomain_list:
-        for subdomain in subdomain_list:
-            webinfo_list = subdomain.web_in_subdomain.all()
-            server_list = subdomain.server_in_subdomain.all()
-            plug_lists = []
-            port_lists = []
-            if server_list:
-                for server in server_list:
-                    port = server.port_in_server.all()
-                    port_lists.append(port)
-            if webinfo_list:
-                for web in webinfo_list:
-                    plug = web.plug_in_webinfo.all()
-                    plug_lists.append(plug)
-    else:
-        error = '无效的参数'
-        return render(request,'error.html',{'error':error})
+def view_WEBinfo(request, subdomain_id):
+    '''
+    详情页：子域名 + 网站(含组件) + 服务器(含端口)。
+
+    通过 services.get_subdomain_detail 一次性预取完整资产链，
+    替代原来 .filter() + for 循环 + N+1 查询的拼法。
+    plug_lists / port_lists 保持 list-of-QuerySets 格式兼容模板，
+    但数据来自预取，无额外查询。
+    '''
+    subdomain = services.get_subdomain_detail(subdomain_id)
+
+    # 构建带范围限制的表单：组件下拉只显示当前子域名的网站，
+    # 端口下拉只显示当前子域名的服务器
     web_form = WebinfoForms()
-    plug_form = PlugForms()
+    plug_form = PlugForms(subdomain_id=subdomain_id)
     server_form = ServerForms()
-    port_form = PortForms()
+    port_form = PortForms(subdomain_id=subdomain_id)
+
+    webinfo_list = subdomain.web_in_subdomain.all()
+    server_list = subdomain.server_in_subdomain.all()
+
     data = {
-            'subdomain_list':subdomain_list,
-            'webinfo_list':webinfo_list,
-            'server_list':server_list,
-            'port_lists':port_lists,
-            'plug_lists':plug_lists,
-            'web_form':web_form,
-            'plug_form':plug_form,
-            'server_form':server_form,
-            'port_form':port_form,
-            'subdomain_id':subdomain_id,
-            }
-    return render(request,'SRCinfo/WEB_view.html',data)
+        'subdomain': subdomain,
+        'subdomain_list': [subdomain],  # 兼容模板 {% for subdomain in subdomain_list %}
+        'webinfo_list': webinfo_list,
+        'server_list': server_list,
+        'plug_lists': [web.plug_in_webinfo.all() for web in webinfo_list],
+        'port_lists': [server.port_in_server.all() for server in server_list],
+        'web_form': web_form,
+        'plug_form': plug_form,
+        'server_form': server_form,
+        'port_form': port_form,
+        'subdomain_id': subdomain_id,
+        'subdomain_www': subdomain.subdomain_www,  # 修复模板 line 102 死变量
+    }
+    return render(request, 'SRCinfo/WEB_view.html', data)
 
 
 @csrf_protect
 @login_required
-def Webinfo_add(request,subdomain_id):
-    if request.method == "POST":
-        form = WebinfoForms(request.POST)
-        if form.is_valid():
-            try:
-                num = Webinfo.objects.latest('id').id
-            except Exception:
-                num = 0
-            web_id =  time.strftime('%Y%m%d',time.localtime(time.time())) + str(num)
-            web_url = form.cleaned_data['web_url']
-            web_front = form.cleaned_data['web_front']
-            web_language = form.cleaned_data['web_language']
-            web_framework = form.cleaned_data['web_framework']
-            web_template = form.cleaned_data['web_template']
-            web_container = form.cleaned_data['web_container']
-            
-            Webinfo.objects.get_or_create(web_id = web_id,
-                                          web_url = web_url,
-                                          web_front = web_front,
-                                          web_language = web_language,
-                                          web_framework = web_framework,
-                                          web_template = web_template,
-                                          web_container = web_container,
-                                          web_subdomain = Subdomain.objects.get(subdomain_id=subdomain_id)
-                                          )
-            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
-        else:
-            error = '添加失败，请检查输入'
-            return render(request,'error.html',{'error':error})
-    else:
-        error = '请求错误'
-        return render(request,'error.html',{'error':error})
-    
-@csrf_protect
-@login_required
-def Plug_add(request,subdomain_id):
-    if request.method == "POST":
-        form = PlugForms(request.POST)
-        if form.is_valid():
-            plug_name = form.cleaned_data['plug_name']
-            plug_version = form.cleaned_data['plug_version']
-            plug_webinfo = form.cleaned_data['plug_webinfo']
-            web_id = plug_webinfo.web_id
-            Plug.objects.get_or_create(plug_name = plug_name,
-                                          plug_version = plug_version,
-                                          plug_webinfo = Webinfo.objects.get(web_id = web_id )
-                                          )
-            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
-        else:
-            error = '添加失败，请检查输入'
-            return render(request,'error.html',{'error':error})
-    else:
-        error = '请求错误'
-        return render(request,'error.html',{'error':error})
-    
-@csrf_protect
-@login_required
-def Server_add(request,subdomain_id):
-    if request.method == "POST":
-        form = ServerForms(request.POST)
-        if form.is_valid():
-            server_subdomain = Subdomain.objects.get(subdomain_id=subdomain_id)
-            company_id = server_subdomain.subdomain_company.company_id
-            server_name = form.cleaned_data['server_name']
-            server_ip = form.cleaned_data['server_ip']
-            server_os = form.cleaned_data['server_os']
-            Server.objects.get_or_create(server_subdomain=server_subdomain,
-                                       server_company=CompanyInfo.objects.get(company_id=company_id),
-                                       server_name=server_name,
-                                       server_ip=server_ip,
-                                       server_os=server_os,
-                                       )
-            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
-        else:
-            error = '添加失败，请检查输入'
-            return render(request,'error.html',{'error':error})
-    else:
-        error = '请求错误'
-        return render(request,'error.html',{'error':error})
+def Webinfo_add(request, subdomain_id):
+    '''
+    在指定子域名下添加网站。
+    通过 services 查找上级子域名，找不到时 404 而非 500。
+    '''
+    if request.method != "POST":
+        return render(request, 'error.html', {'error': '请求错误'})
+
+    subdomain = services.get_subdomain_or_404(subdomain_id)
+    form = WebinfoForms(request.POST)
+    if form.is_valid():
+        services.create_webinfo(form, subdomain)
+        return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+
+    return render(request, 'error.html', {'error': '添加失败，请检查输入'})
+
 
 @csrf_protect
 @login_required
-def Port_add(request,subdomain_id):
-    if request.method == "POST":
-        form = PortForms(request.POST)
-        if form.is_valid():
-            name = form.cleaned_data['name']
-            port = form.cleaned_data['port']
-            product = form.cleaned_data['product']
-            version = form.cleaned_data['version']
-            port_server = form.cleaned_data['port_server']
-            Port.objects.get_or_create(name=name,
-                                       port=port,
-                                       product=product,
-                                       version=version,
-                                       port_server=port_server,
-                                       )
-            return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
-        else:
-            error = '添加失败，请检查输入'
-            return render(request,'error.html',{'error':error})
-    else:
-        error = '请求错误'
-        return render(request,'error.html',{'error':error})
+def Plug_add(request, subdomain_id):
+    '''
+    添加组件。
+    表单接收 subdomain_id 以限制网站下拉范围并做服务端校验，
+    去掉了原来从 cleaned_data 取 web_id 再 Webinfo.objects.get() 的冗余查询。
+    '''
+    if request.method != "POST":
+        return render(request, 'error.html', {'error': '请求错误'})
+
+    services.get_subdomain_or_404(subdomain_id)
+    form = PlugForms(request.POST, subdomain_id=subdomain_id)
+    if form.is_valid():
+        services.create_plug(form)
+        return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+
+    return render(request, 'error.html', {'error': '添加失败，请检查输入'})
+
+
+@csrf_protect
+@login_required
+def Server_add(request, subdomain_id):
+    '''
+    在指定子域名下添加服务器。
+    services 层通过 subdomain.subdomain_company 直取企业对象，
+    去掉了原来先取 company_id 再 CompanyInfo.objects.get() 的冗余查询。
+    '''
+    if request.method != "POST":
+        return render(request, 'error.html', {'error': '请求错误'})
+
+    subdomain = services.get_subdomain_or_404(subdomain_id)
+    form = ServerForms(request.POST)
+    if form.is_valid():
+        services.create_server(form, subdomain)
+        return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+
+    return render(request, 'error.html', {'error': '添加失败，请检查输入'})
+
+
+@csrf_protect
+@login_required
+def Port_add(request, subdomain_id):
+    '''
+    添加端口。
+    表单接收 subdomain_id 以限制服务器下拉范围并做服务端校验。
+    '''
+    if request.method != "POST":
+        return render(request, 'error.html', {'error': '请求错误'})
+
+    services.get_subdomain_or_404(subdomain_id)
+    form = PortForms(request.POST, subdomain_id=subdomain_id)
+    if form.is_valid():
+        services.create_port(form)
+        return HttpResponseRedirect('/SRC/subdomaininfo/' + str(subdomain_id))
+
+    return render(request, 'error.html', {'error': '添加失败，请检查输入'})
